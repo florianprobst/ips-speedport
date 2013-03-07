@@ -17,17 +17,15 @@
  */
 function compat_pbkdf2($algo, $password, $salt, $iterations, $length = 0, $rawOutput = false)
 {
+    $result = '';
     $loops = 1;
-    $hashLength = strlen(hash($algo, '', true));
     if ($length > 0) {
         $digestLength = $length;
         if (!$rawOutput) {
             $digestLength = ceil($length / 2);
         }
-        $loops = ceil($digestLength / $hashLength);
+        $loops = (int)ceil($digestLength / strlen(hash($algo, '', true)));
     }
-
-    $result = '';
 
     for ($i = 1; $i <= $loops; $i++) {
         $digest = hash_hmac($algo, $salt . pack('N', $i), $password, true);
