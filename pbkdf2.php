@@ -20,11 +20,7 @@ function compat_pbkdf2($algo, $password, $salt, $iterations, $length = 0, $rawOu
     $result = '';
     $loops = 1;
     if ($length > 0) {
-        $digestLength = $length;
-        if (!$rawOutput) {
-            $digestLength = ceil($length / 2);
-        }
-        $loops = (int)ceil($digestLength / strlen(hash($algo, '', true)));
+        $loops = (int)ceil($length / strlen(hash($algo, '', $rawOutput)));
     }
 
     for ($i = 1; $i <= $loops; $i++) {
