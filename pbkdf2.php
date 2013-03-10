@@ -57,6 +57,15 @@ function compat_pbkdf2($algo, $password, $salt, $iterations, $length = 0, $rawOu
         return false;
     }
 
+    // check salt
+    if (strlen($salt) > PHP_INT_MAX - 4) {
+        trigger_error(sprintf(
+            '%s(): Supplied salt is too long, max of INT_MAX - 4 bytes: %d supplied',
+            __FUNCTION__, strlen($salt)
+        ), E_USER_WARNING);
+        return false;
+    }
+
     // initialize
     $derivedKey = '';
     $loops = 1;
