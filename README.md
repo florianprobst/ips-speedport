@@ -38,4 +38,7 @@ Das Script setzt die Klasse "speedport" von Jan Altensen voraus. Diese ist in di
 Da diese Klasse Funktionen von PHP 5.5 voraussetzt (PBKDF2) und IPS 3.x auf einer älteren PHP Version arbeitet, ist die Login-Funktion modifiziert, dass bei PHP < 5.5 die Funktion compat_pbkdf2() aufgerufen wird.
 Diese habe ich von hier bezogen: [Quelle compat_pbkdf2](https://gist.github.com/rsky/5104756)
 
-Auch wenn es schöner aussieht, die einzelnen Klassen und Funktionen in "includes / requires" zu packen habe ich in diesem Fall darauf verzichtet um eine einfache Installation in IPS zu ermöglichen. Ihr könnt das gerne auseinandernehmen :-)
+###Screenshots
+![dsl/lte-router information](assets/dsl-lte-router-infos.jpg)
+![ips variables](assets/ips-variables-speedport.jpg)
+![anruferlisten](assets/anruflisten-speedport.jpg)
