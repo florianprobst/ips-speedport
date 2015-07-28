@@ -25,7 +25,7 @@ $fw_update_interval = 43200 /*[Objekt #43200 existiert nicht]*/;
 $parentId = $_IPS['SELF'];
 
 require_once('speedport-hybrid-php-api/SpeedportHybrid.class.php');
-require_once('compat_pbkdf2/pbkdf2.php');
+//require_once('compat_pbkdf2/pbkdf2.php'); maybe not necessary since update on speedport hybrid api
 require_once('lib/SpeedportVariableProfile.class.php');
 require_once('lib/SpeedportVariable.class.php');
 require_once('lib/SpeedportCall.class.php');
@@ -242,7 +242,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 	}
 
 	public function update(){
-		$data = $this->getData('status');
+		$data = $this->getStatus();
 
 		if($data[15]["varvalue"] == "online"){															//in format "online/offline", out: true/false
 			$this->dsl_status						= true;
@@ -260,7 +260,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->wlan_5ghz_enabled			= (bool)$data[24]["varvalue"];
 		$this->firmware_version				= (string)$data[27]["varvalue"];
 
-		$data = $this->getData('dsl');
+		$data = $this->getDSL();
 		$this->snr_margin_upstream		= (float)$data["Line"]["uSNR"] / 10;
 		$this->snr_margin_downstream	= (float)$data["Line"]["dSNR"] / 10;
 		$this->line_attenuation_up		= (float)$data["Line"]["uLine"] / 10;
@@ -278,7 +278,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 			$this->dsl_synchronisation	= false;
 		}
 
-		$data = $this->getData('lteinfo');
+		$data = $this->getInterfaces();
 		if($data["card_status"] == "SIM OK"){
 			$this->lte_sim_card					= true;
 		}else{
@@ -288,7 +288,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->lte_rsrp								= (int)$data["rsrp"];
 		$this->lte_rsrq								= (int)$data["rsrq"];
 
-		$data = $this->getData('bonding_tunnel');
+		$data = $this->getBondingTunnel();
 		if($data["bonding"] == "Up"){
 			$this->tunnel_bonding				= true;
 		}else{
