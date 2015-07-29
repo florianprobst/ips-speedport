@@ -380,13 +380,34 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		if(!($variable instanceof SpeedportVariable))
 	   	throw new Exception("Param variable must be an instance of SpeedportVariable!");
 
-		array_shift($calls);       											//entferne ersten Eintrag (Überschrift)
-		foreach($calls as $new_call){
-		  if($new_call != ""){                					//am Ende befindet sich manchmal ein Leer-Eintrag
-				$t = explode(" ", $new_call);
-				if(count($t) < 4) $t[3] = "00:00:00";       //missed calls haben keine Gesprächsdauer
-				$target_list = $this->addCall($target_list, new SpeedportCall($t[0], $t[1], $t[2], $t[3]));
+		/*
+		mit der neuen api wurde das anruf-array verändert und ist je nach anruftyp unterschiedlich
+		das array ist zu normalisieren.
+		
+		dialed calls: array(5) with index "id", "dialedcalls_date", "dialedcalls_time", "dialedcalls_who", "dialedcalls_duration"
+		missed calls: array(4) with index "id", "missedcalls_date", "missedcalls_time", "missedcalls_who"
+		taken calls: array(5) with index "id", "takencalls_date", "takencalls_time", "takencalls_who", "takencalls_duration"
+		*/
+		foreach($calls as $c){
+			if(isset($c["dialedcalls_date"])){
+					$t[0] = $c["dialedcalls_date"];
+					$t[1] = $c["dialedcalls_time"];
+					$t[2] = $c["dialedcalls_who"];
+					$t[3] = $c["dialedcalls_duration"];
 			}
+			if(isset($c["missedcalls_date"])){
+					$t[0] = $c["missedcalls_date"];
+					$t[1] = $c["missedcalls_time"];
+					$t[2] = $c["missedcalls_who"];
+					$t[3] = "00:00:00";												//missed calls haben keine Gesprächsdauer
+			}
+			if(isset($c["takencalls_date"])){
+					$t[0] = $c["takencalls_date"];
+					$t[1] = $c["takencalls_time"];
+					$t[2] = $c["takencalls_who"];
+					$t[3] = $c["takencalls_duration"];
+			}
+			$target_list = $this->addCall($target_list, new SpeedportCall($t[0], $t[1], $t[2], $t[3]));
 		}
 
 		$val = $variable->getValue();
