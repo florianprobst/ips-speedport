@@ -113,6 +113,8 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "DSL_Status", self::tBOOL, "", "", $assoc));
 		unset($assoc);
 
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "UpTime", self::tINT, "", " Tage", NULL));
+
 		$assoc[0] = ["val"=>0,	"name"=>"Disabled",	"icon" => "", "color" => self::hColor1];
 		$assoc[1] = ["val"=>1,	"name"=>"Enabled",	"icon" => "", "color" => self::hColor6];
 		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "LTE_Enabled", self::tBOOL, "", "", $assoc));
@@ -166,7 +168,6 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$assoc[5] = ["val"=>-3,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor6];
 		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "RSRQ", self::tINT, "", " dBm", $assoc));
 		unset($assoc);
-
 		//Erstelle IPS-Variablen wenn nötig
 		array_push($this->variables, new SpeedportVariable("DSL_Status", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "DSL_Status")));
 		array_push($this->variables, new SpeedportVariable("LTE_Enabled", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "LTE_Enabled")));
@@ -198,7 +199,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		array_push($this->variables, new SpeedportVariable("Missed_Calls", self::tSTRING, $this->parentId, NULL, "~HTMLBox"));
 		array_push($this->variables, new SpeedportVariable("Taken_Calls", self::tSTRING, $this->parentId, NULL, "~HTMLBox"));
 		array_push($this->variables, new SpeedportVariable("Firmware_UpToDate", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "Firmware_UpToDate")));
-		array_push($this->variables, new SpeedportVariable("UpTime", self::tINT, $this->parentId, NULL, NULL));
+		array_push($this->variables, new SpeedportVariable("UpTime", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "UpTime")));
 
 		//Sortiere Variablen
 		$i=0;
@@ -279,7 +280,6 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 
 		$this->ipv4_address						= (string)$data["ipv4"];
 		
-		echo "UPTIME " . $this->getUptime() . " \n";
 		$this->up_time									= (int)$this->getUptime();
 
 		//Schreibe Daten in IPS-Variablen
