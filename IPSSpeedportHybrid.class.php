@@ -226,22 +226,22 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 
 	public function update(){
 		$data = $this->getData('status');
-
-		if($data[15]["varvalue"] == "online"){															//in format "online/offline", out: true/false
+		
+		if($this->getStatusVal("onlinestatus", $data) == "online"){								//in format "online/offline", out: true/false
 			$this->dsl_status						= true;
 		}else{
 			$this->dsl_status						= false;
 		}
 
-		$this->lte_enabled						= (bool)$data[9]["varvalue"];
-		$this->lte_signal							=	(int)$data[12]["varvalue"];					//0-5 Balken. Jeder entspricht 20%
-		$this->dsl_downstream					= (float)$data[19]["varvalue"];
-		$this->dsl_upstream						= (float)$data[20]["varvalue"];
-		$this->wlan_ssid							= (string)$data[21]["varvalue"];
-		$this->wlan_5ghz_ssid					= (string)$data[22]["varvalue"];
-		$this->wlan_enabled						= (bool)$data[23]["varvalue"];
-		$this->wlan_5ghz_enabled			= (bool)$data[24]["varvalue"];
-		$this->firmware_version				= (string)$data[27]["varvalue"];
+		$this->lte_enabled						= (bool)$this->getStatusVal("use_lte", $data);
+		$this->lte_signal							=	(int)$this->getStatusVal("lte_signal", $data);					//0-5 Balken. Jeder entspricht 20%
+		$this->dsl_downstream					= (float)$this->getStatusVal("dsl_downstream", $data);
+		$this->dsl_upstream						= (float)$this->getStatusVal("dsl_upstream", $data);
+		$this->wlan_ssid							= (string)$this->getStatusVal("wlan_ssid", $data);
+		$this->wlan_5ghz_ssid					= (string)$this->getStatusVal("wlan_5ghz_ssid", $data);
+		$this->wlan_enabled						= (bool)$this->getStatusVal("use_wlan", $data);
+		$this->wlan_5ghz_enabled			= (bool)$this->getStatusVal("use_wlan_5ghz", $data);
+		$this->firmware_version				= (string)$this->getStatusVal("firmware_version", $data);
 
 		$data = $this->getData('dsl');
 		$this->snr_margin_upstream		= (float)$data["Line"]["uSNR"] / 10;
@@ -316,6 +316,18 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->processCalls($this->taken_calls, $this->getTakenCalls(), $this->getVariableByName("Taken_Calls"));
 
 		$this->firmwareUpdateCheck();
+	}
+	
+	//$this->getData('status') gibt ein array mit status daten des routers aus
+	//leider sind diese je nach Firmware unterschiedlich angeordnet. seit firwmare 050124.02.00.009
+	//gibt es eine variablen id welche eine zuordnung erleichtert. Diese Methode sucht nach einer
+	//varid innerhalb des datensatzes und gibt deren wert zurück.
+	private function getStatusVal($varid, $dataset){
+		foreach ($dataset as &$value) {
+		 	 if($value["varid"] == $varid) 
+		 	 	return $value["varvalue"];
+		} 
+		return null;
 	}
 
 	//diese Methode braucht einen Augenblick und sollte in einem angemessenen Interval abgefragt werden
