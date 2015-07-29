@@ -4,9 +4,15 @@ Telekom Speedport Hybrid Anbindung für IP-Symcon
 ## Aufgabe des Skripts
 Dieses Skript greift auf die Weboberfläche des Telekom Speedport Hybrid Routers zu und liest dabei alle möglichen Informationen aus. Dazu gehören u.a. DSL-Status, IP-Adresse, Anruflisten, DSL-Informationen, Leitungsqualität, LTE-Verbindungsqualität, WLAN-Informationen, etc. 
 
+### Unterstützte Firmware
+Getestet wurde das Skript mit dem jeweils zum Testdatum aktuellen Entwicklungsstand. Spätere Weiterentwicklungen sind nicht mit den älteren Firmware-Versionen getestet.
+
+* 29.07.2015 => Firmware 050124.01.00.057
+* 29.07.2015 => Firmware 050124.02.00.009
+
 ## Weiterführende Informationen
 Das Skript legt selbstständig benötigte IPS-Variablen und Variablenprofile unterhalb des Skriptes an.
-Derzeit sind dies 29-Variablen und 9 Variablenprofile.
+Derzeit sind dies 30-Variablen und 10 Variablenprofile. (Je nach IP-Symcon Lizenz bitte berücksichtigen)
 Durch das Speichern der Werte in IPS-Variablen wird Logging und das Anbinden von IPS-Events ermöglicht.
 Zur besseren Auffindbarkeit und eindeutigen Zuordnung werden alle Variablenprofile mit einem Präfix angelegt. 
 Standardmässig lautet das `Speedport_`.
@@ -16,8 +22,6 @@ Die in den Variablenprofilen festgelegten Wertungen (was ist gut und was schlech
 Es ist zu berücksichtigen, dass jeder Aufruf dieses Skripts andere Benutzer aus der Weboberfläche des Routers herauswirft.
 Desweiteren benötigt das Skript je nach Rechenkapazität und Verbindung des IPS-Hosts zum Router einen Moment zur Ausführung.
 Bei mir sind es bis zu 5 Sekunden. 
-
-Getestet wurde das Skript bei mir mit einem Speedport Hybrid auf Firmware 050124.01.00.057
 
 Ältere Speedportmodelle verfügen über ein anderes Webinterface / Anmeldeverfahren und funktionieren voraussichtlich nicht. Eventuell funktioniert es mit aktuellen Non-Hybrid-Speedports. 
 
@@ -35,8 +39,6 @@ Wenn diese Funktion ausgeführt wird, werden alle erstellten Variablen und Varia
 ##Externe Quellen
 
 Das Script setzt die Klasse "speedport" von Jan Altensen voraus. Diese ist in diesem Skript inkludiert. [Quelle Speedport-Klasse von Jan Altensen] (https://github.com/Stricted/speedport-hybrid-php-api/).
-Da diese Klasse Funktionen von PHP 5.5 voraussetzt (PBKDF2) und IPS 3.x auf einer älteren PHP Version arbeitet, ist die Login-Funktion modifiziert, dass bei PHP < 5.5 die Funktion compat_pbkdf2() aufgerufen wird.
-Diese habe ich von hier bezogen: [Quelle compat_pbkdf2](https://gist.github.com/rsky/5104756)
 
 ###Screenshots
 ![dsl/lte-router information](assets/dsl-lte-router-infos.jpg)
