@@ -4,7 +4,7 @@ Telekom Speedport Hybrid Anbindung für IP-Symcon
 ## Aufgabe des Skripts
 Dieses Skript greift auf die Weboberfläche des Telekom Speedport Hybrid Routers zu und liest dabei alle möglichen Informationen aus. Dazu gehören u.a. DSL-Status, IP-Adresse, Anruflisten, DSL-Informationen, Leitungsqualität, LTE-Verbindungsqualität, WLAN-Informationen, etc. 
 
-### Unterstützte Firmware
+## Unterstützte Firmware
 Getestet wurde das Skript mit dem jeweils zum Testdatum aktuellen Entwicklungsstand. Spätere Weiterentwicklungen sind nicht mit den älteren Firmware-Versionen getestet.
 
 * 29.07.2015 => Firmware 050124.01.00.057
@@ -31,14 +31,22 @@ Bei mir sind es bis zu 10 Sekunden.
 2. In der IP-Symcon Verwaltungskonsole eine Kategorie `Speedport` und eine Unterkategorie `Variables` erstellen (Namen und Ablageorte sind frei wählbar)
 3. Unterhalb der Kategorie `Speedport` sind mehrere Skripte manuell anzulegen. Diese sind u.a. die Konfiguration (IP des Routers, sowie das Passwort für den Zugang auf dessen Weboberfläche, als auch diverse Skripte zum Ausführen von Aktionen auf dem Router (Status update, Neustart, etc.). Die anzulegenden Skripte befinden sich im Unterordner `ips-scripts` und können per copy&paste in die IPS-Console eingetragen werden. Alternativ sind die Skripte auch weiter unten direkt beschrieben.
 
-zur schnelleren Deinstallation gibt's ganz unten eine auskommentierte Funktion `$sp->cleanup();`.
-Wenn diese Funktion ausgeführt wird, werden alle erstellten Variablen und Variablenprofile wieder gelöscht.
-(Achtung: Variablenprofile werden anhand des Präfix gesucht. Wenn der geändert wurde und noch alte Profile existieren, werden diese nicht automatisch gelöscht.) 
+#### Struktur in der IP-Symcon Console nach Installation
+* Speedport (Kategorie)
+* Variables (Kategorie)
+* - diverse automatisch generierte Statusvariablen nach erstem Statusupdate
+* Config (script)
+* Update Status (script)
+* Restart Router (script)
+* Uninstall (script)
 
+## IP-Symcon Console - anzulegende Skripte
 ###config script
 Enthält die "globale" Konfiguration der Speedport-Anbindung und wird von den anderen IPS-Speedport-Scripten aufgerufen.
 ```php
 <?
+//Enthält die "globale" Konfiguration der Speedport-Anbindung und wird von den anderen IPS-Speedport-Scripten aufgerufen
+
 $password = "deinPasswort"; //Kennwort für den Zugriff auf den Router
 $url = "http://192.168.1.1/"; //IP-Adresse des Speedport-Routers (häufig auch "speedport.ip")
 $parentId = 18172 /*[System\Skripte\Speedport\Variables]*/; //Speicherort für zu erstellende Speedport Variablen.
@@ -59,6 +67,9 @@ Sammelt alle Statusinformationen, Anruferlisten, etc. und legt diese in den daf�
 Es ist ratsam dieses Skript per Interval-Ereignis in IP-Symcon regelmäßig auszuführen. (bsp.: alle 10 Minuten)
 ```php
 <?
+//Sammelt alle Statusinformationen, Anruferlisten, etc. und legt diese in den dafür vorgesehenen IPS Variablen ab.
+//Es ist ratsam dieses Skript per Interval-Ereignis in IP-Symcon regelmäßig auszuführen. (bsp.: alle 10 Minuten)
+
 $config_script = 41641 /*[System\Skripte\Speedport\Config]*/; //instanz id des ip-symcon config skripts
 
 require_once(IPS_GetScript($config_script)['ScriptFile']);
@@ -69,11 +80,45 @@ $sp->update();
 ?>
 ```
 
+###restart router script
+Das Ausführen des Skripts startet den Router neu
+```php
+<?
+//Das Ausführen des Skripts startet den Router neu
+
+$config_script = 41641 /*[System\Skripte\Speedport\Config]*/; //instanz id des ip-symcon config skripts
+
+require_once(IPS_GetScript($config_script)['ScriptFile']);
+require_once('../webfront/user/ips-speedport/IPSSpeedportHybrid.class.php');
+
+$sp = new IPSSpeedportHybrid($password, $url, $debug, $variable_profile_prefix, $call_sort, $parentId, $fw_update_interval);
+$sp->reboot();
+?>
+```
+
+###uninstall / cleanup
+Das Ausführen des Skripts entfernt alle durch das Skript erstellten Variablen und Variablenprofile.
+Anmerkung: das Skript sucht nur unterhalb der ParentId des Config Skripts nach Speedport-Variablen.
+```php
+<?
+//Das Ausführen des Skripts entfernt alle durch das Skript erstellten Variablen und Variablenprofile.
+//Anmerkung: das Skript sucht nur unterhalb der ParentId des Config Skripts nach Speedport-Variablen.
+
+$config_script = 41641 /*[System\Skripte\Speedport\Config]*/; //instanz id des ip-symcon config skripts
+
+require_once(IPS_GetScript($config_script)['ScriptFile']);
+require_once('../webfront/user/ips-speedport/IPSSpeedportHybrid.class.php');
+
+$sp = new IPSSpeedportHybrid($password, $url, $debug, $variable_profile_prefix, $call_sort, $parentId, $fw_update_interval);
+$sp->cleanup();
+?>
+```
+
 ##Externe Quellen
 
 Das Script setzt die Klasse "speedport" von Jan Altensen voraus. Diese ist in diesem Skript inkludiert. [Quelle Speedport-Klasse von Jan Altensen] (https://github.com/Stricted/speedport-hybrid-php-api/).
 
-###Screenshots
+##Screenshots
 ![dsl/lte-router information](assets/dsl-lte-router-infos.jpg)
 ![ips variables](assets/ips-variables-speedport.jpg)
 ![anruferlisten](assets/anruflisten-speedport.jpg)
