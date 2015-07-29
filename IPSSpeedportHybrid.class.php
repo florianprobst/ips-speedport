@@ -54,6 +54,8 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 	protected $tunnel_bonding;							//gibt an ob DSL und LTE Verbindungen gekoppelt sind
 	protected $ipv4_address;								//aktuelle IP-Adresse im Internet
 
+	protected $up_time;											//up time basierend auf "online" Zeit des LAN Adapters in Tagen
+
 	protected $call_sort = SORT_DESC;				//Sortierrichtung der Anruflisten (nach Datum und Uhrzeit)=> SORT_DESC/SORT_ASC
 	protected $dialed_calls = array();			//historie herausgegangener Gespräche / Anrufe (Array)
 	protected $missed_calls = array();			//historie verpasster Anrufe (Array)
@@ -86,6 +88,10 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->fw_update_interval = $fw_update_interval;
 		$this->setup();
 		$this->login($password);
+	}
+	
+	public function __destruct(){
+		$this->logout();
 	}
 
 	public function cleanup(){
@@ -193,6 +199,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		array_push($this->variables, new SpeedportVariable("Missed_Calls", self::tSTRING, $this->parentId, NULL, "~HTMLBox"));
 		array_push($this->variables, new SpeedportVariable("Taken_Calls", self::tSTRING, $this->parentId, NULL, "~HTMLBox"));
 		array_push($this->variables, new SpeedportVariable("Firmware_UpToDate", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "Firmware_UpToDate")));
+		array_push($this->variables, new SpeedportVariable("UpTime", self::tINT, $this->parentId, NULL, NULL));
 
 		//Sortiere Variablen
 		$i=0;
@@ -272,6 +279,9 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		}
 
 		$this->ipv4_address						= (string)$data["ipv4"];
+		
+		echo "UPTIME " . $this->getUptime() . " \n";
+		$this->up_time									= (int)$this->getUptime();
 
 		//Schreibe Daten in IPS-Variablen
 		$this->getVariableByName("DSL_Status")->set($this->dsl_status);
@@ -300,6 +310,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->getVariableByName("RSRQ")->set($this->lte_rsrq);
 		$this->getVariableByName("Tunnel_Bonding")->set($this->tunnel_bonding);
 		$this->getVariableByName("IP_Address")->set($this->ipv4_address);
+		$this->getVariableByName("UpTime")->set($this->up_time);
 
 		$this->processCalls($this->dialed_calls, $this->getDialedCalls(), $this->getVariableByName("Dialed_Calls"));
 		$this->processCalls($this->missed_calls, $this->getMissedCalls(), $this->getVariableByName("Missed_Calls"));
