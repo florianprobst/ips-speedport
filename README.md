@@ -7,7 +7,6 @@ Dieses Skript greift auf die Weboberfläche des Telekom Speedport Hybrid Routers
 ## Unterstützte Firmware
 Getestet wurde das Skript mit dem jeweils zum Testdatum aktuellen Entwicklungsstand. Spätere Weiterentwicklungen sind nicht mit den älteren Firmware-Versionen getestet.
 
-* 29.07.2015 => Firmware 050124.01.00.057
 * 29.07.2015 => Firmware 050124.02.00.009
 
 ## Weiterführende Informationen
@@ -32,6 +31,7 @@ Bei mir sind es bis zu 10 Sekunden.
 3. Unterhalb der Kategorie `Speedport` sind mehrere Skripte manuell anzulegen. Diese sind u.a. die Konfiguration (IP des Routers, sowie das Passwort für den Zugang auf dessen Weboberfläche, als auch diverse Skripte zum Ausführen von Aktionen auf dem Router (Status update, Neustart, etc.). Die anzulegenden Skripte befinden sich im Unterordner `ips-scripts` und können per copy&paste in die IPS-Console eingetragen werden. Alternativ sind die Skripte auch weiter unten direkt beschrieben.
 
 #### Struktur in der IP-Symcon Console nach Installation
+(siehe dazu auch Screenshot unten)
 * Speedport (Kategorie)
 * Variables (Kategorie)
 * - diverse automatisch generierte Statusvariablen nach erstem Statusupdate
@@ -39,6 +39,7 @@ Bei mir sind es bis zu 10 Sekunden.
 * Update Status (script)
 * Restart Router (script)
 * Uninstall (script)
+
 
 ## IP-Symcon Console - anzulegende Skripte
 ###config script
