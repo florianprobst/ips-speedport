@@ -1,29 +1,4 @@
 <?
-
-$password = "70334117";										//Kennwort für den Zugriff auf den Router
-$url = "http://192.168.1.1/";							//IP-Adresse des Speedport-Routers (häufig auch "speedport.ip")
-
-/**
-	* OPTIONALE ANPASSUNGEN
-**/
-$debug = false;														//Debug-Informationen auf Konsole ausgeben
-$variable_profile_prefix = "Speedport_";	//Prefix für anzulegende Variablenprofile
-$call_sort = SORT_DESC;										//Sortier-Reihenfolge für Anruflisten. SORT_DESC => neueste zuerst, SORT_ASC => älteste zuerst.
-
-//Intervall in Minuten in dem eine Firmware-Updateprüfung erfolgen soll
-//(aufwändige Funktion; nicht so oft durchführen. Bsp.: 1 mal im Monat => ca. 43200 Minuten)
-$fw_update_interval = 43200 /*[Objekt #43200 existiert nicht]*/;
-
-//Speicherort für zu erstellende Speedport Variablen.
-//Standard: Variablen werden unterhalb dieses Scripts abgelegt. (Linux User bitte weiter unten lesen!)
-//
-//Achtung: Wenn das geändert wird, erstellt das Script unterhalb dieser Id diesem Ort alle Variablen neu
-//sofern diese nicht bereits da hin "verschoben" wurden. Bereits existierende Variablen an einem anderen
-//Ort bleiben bestehen und müssten dann manuell gelöscht werden.
-//Nochmal Achtung: Linux-Versionen (u.a. auf Banana Pi) scheinen in der aktuellen Version nicht mit der
-//Variable $_IPS['SELF'] zurecht zu kommen. Für diese Benutzer muss die ScriptId manuell gesetzt werden!
-$parentId = $_IPS['SELF'];
-
 require_once('speedport-hybrid-php-api/SpeedportHybrid.class.php');
 //require_once('compat_pbkdf2/pbkdf2.php'); maybe not necessary since update on speedport hybrid api
 require_once('lib/SpeedportVariableProfile.class.php');
@@ -102,7 +77,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 	const hColor6			= 0x46F700;						//grün
 
 	public function __construct($password, $url = "http://speedport.ip", $debug = true, $variable_profile_prefix = "Speedport_", $call_sort = SORT_DESC, $parentId = "", $fw_update_interval = 43200 /*[Objekt #43200 existiert nicht]*/){
-		parent::__construct($password, $url);
+		parent::__construct($url);
 		if($parentId == "") $parentId = $_IPS['SELF'];
 		$this->debug = $debug;
 		$this->variable_profile_prefix = $variable_profile_prefix;
@@ -110,6 +85,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->parentId = $parentId;
 		$this->fw_update_interval = $fw_update_interval;
 		$this->setup();
+		$this->login($password);
 	}
 
 	public function cleanup(){
@@ -242,7 +218,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 	}
 
 	public function update(){
-		$data = $this->getStatus();
+		$data = $this->getData('status');
 
 		if($data[15]["varvalue"] == "online"){															//in format "online/offline", out: true/false
 			$this->dsl_status						= true;
@@ -260,7 +236,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->wlan_5ghz_enabled			= (bool)$data[24]["varvalue"];
 		$this->firmware_version				= (string)$data[27]["varvalue"];
 
-		$data = $this->getDSL();
+		$data = $this->getData('dsl');
 		$this->snr_margin_upstream		= (float)$data["Line"]["uSNR"] / 10;
 		$this->snr_margin_downstream	= (float)$data["Line"]["dSNR"] / 10;
 		$this->line_attenuation_up		= (float)$data["Line"]["uLine"] / 10;
@@ -278,7 +254,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 			$this->dsl_synchronisation	= false;
 		}
 
-		$data = $this->getInterfaces();
+		$data = $this->getData('lteinfo');
 		if($data["card_status"] == "SIM OK"){
 			$this->lte_sim_card					= true;
 		}else{
@@ -288,7 +264,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$this->lte_rsrp								= (int)$data["rsrp"];
 		$this->lte_rsrq								= (int)$data["rsrq"];
 
-		$data = $this->getBondingTunnel();
+		$data = $this->getData('bonding_tunnel');
 		if($data["bonding"] == "Up"){
 			$this->tunnel_bonding				= true;
 		}else{
