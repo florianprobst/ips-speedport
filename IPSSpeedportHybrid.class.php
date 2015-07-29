@@ -1,6 +1,5 @@
 <?
 require_once('speedport-hybrid-php-api/SpeedportHybrid.class.php');
-//require_once('compat_pbkdf2/pbkdf2.php'); maybe not necessary since update on speedport hybrid api
 require_once('lib/SpeedportVariableProfile.class.php');
 require_once('lib/SpeedportVariable.class.php');
 require_once('lib/SpeedportCall.class.php');
