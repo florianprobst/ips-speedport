@@ -1,6 +1,9 @@
 # ips-speedport
 Telekom Speedport Hybrid Anbindung für IP-Symcon
 
+[![Release](https://img.shields.io/github/release/florianprobst/ips-speedport.svg?style=flat-square)](https://github.com/florianprobst/ips-speedport/releases/latest)
+[![License](https://img.shields.io/badge/license-LGPLv3-brightgreen.svg?style=flat-square)](https://github.com/florianprobst/ips-speedport/blob/master/LICENSE)
+
 ## Aufgabe des Skripts
 Dieses Skript greift auf die Weboberfläche des Telekom Speedport Hybrid Routers zu und liest dabei alle möglichen Informationen aus. Dazu gehören u.a. DSL-Status, IP-Adresse, Anruflisten, DSL-Informationen, Leitungsqualität, LTE-Verbindungsqualität, WLAN-Informationen, etc. 
 
