@@ -56,19 +56,23 @@ $url = "http://192.168.1.1/"; //IP-Adresse des Speedport-Routers (häufig auch "
 $parentId = 18172 /*[System\Skripte\Speedport\Variables]*/; //Speicherort für zu erstellende Speedport Variablen.
 
 /** OPTIONALE ANPASSUNGEN **/
-$debug = false;	//Debug-Informationen auf Konsole ausgeben
+$debug = false; //Debug-Informationen auf Konsole ausgeben
 $variable_profile_prefix = "Speedport_"; //Prefix für anzulegende Variablenprofile
 $call_sort = SORT_DESC; //Sortier-Reihenfolge für Anruflisten. SORT_DESC => neueste zuerst, SORT_ASC => älteste zuerst.
 
 //Intervall in Minuten in dem eine Firmware-Updateprüfung erfolgen soll
 //(aufwändige Funktion; nicht so oft durchführen. Bsp.: 1 mal im Monat => ca. 43200 Minuten)
-$fw_update_interval = 43200;
+$fw_update_interval = 43200; //in Minuten
+
+//status update interval: für das Aktualisieren der Routervariablen (empfohlen 10 Minuten)
+$status_update_interval = 10; //in Minuten
 ?>
 ```
 
 ###update status script
 Sammelt alle Statusinformationen, Anruferlisten, etc. und legt diese in den dafür vorgesehenen IPS Variablen ab.
-Es ist ratsam dieses Skript per Interval-Ereignis in IP-Symcon regelmäßig auszuführen. (bsp.: alle 10 Minuten)
+Mit dem ersten manuellen Ausführen legt das Skript automatisch ein Event an um sich künftig im, in der Konfiguration angegebenen
+Interval künftig selbst auszführen (bsp. alle 10 Minuten)
 ```php
 <?
 //Sammelt alle Statusinformationen, Anruferlisten, etc. und legt diese in den dafür vorgesehenen IPS Variablen ab.
@@ -78,9 +82,18 @@ $config_script = 41641 /*[System\Skripte\Speedport\Config]*/; //instanz id des i
 
 require_once(IPS_GetScript($config_script)['ScriptFile']);
 require_once('../webfront/user/ips-speedport/IPSSpeedportHybrid.class.php');
- 
+
 $sp = new IPSSpeedportHybrid($password, $url, $debug, $variable_profile_prefix, $call_sort, $parentId, $fw_update_interval);
 $sp->update();
+
+$event = @IPS_GetEventIDByName($variable_profile_prefix . "UpdateStatusEvent", $_IPS['SELF']);
+if($event == null){
+	$event = IPS_CreateEvent(1); //zyklisches Event
+	IPS_SetName($event, $variable_profile_prefix . "UpdateStatusEvent");
+	IPS_SetEventCyclic($event, 0, 0, 0, 0, 2, $status_update_interval);
+	IPS_SetParent($event, $_IPS['SELF']);
+	IPS_SetEventActive($event, true);
+}
 ?>
 ```
 

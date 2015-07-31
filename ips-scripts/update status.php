@@ -9,4 +9,13 @@ require_once('../webfront/user/ips-speedport/IPSSpeedportHybrid.class.php');
 
 $sp = new IPSSpeedportHybrid($password, $url, $debug, $variable_profile_prefix, $call_sort, $parentId, $fw_update_interval);
 $sp->update();
+
+$event = @IPS_GetEventIDByName($variable_profile_prefix . "UpdateStatusEvent", $_IPS['SELF']);
+if($event == null){
+	$event = IPS_CreateEvent(1); //zyklisches Event
+	IPS_SetName($event, $variable_profile_prefix . "UpdateStatusEvent");
+	IPS_SetEventCyclic($event, 0, 0, 0, 0, 2, $status_update_interval);
+	IPS_SetParent($event, $_IPS['SELF']);
+	IPS_SetEventActive($event, true);
+}
 ?>

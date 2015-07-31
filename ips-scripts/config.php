@@ -12,5 +12,8 @@ $call_sort = SORT_DESC; //Sortier-Reihenfolge für Anruflisten. SORT_DESC => neue
 
 //Intervall in Minuten in dem eine Firmware-Updateprüfung erfolgen soll
 //(aufwändige Funktion; nicht so oft durchführen. Bsp.: 1 mal im Monat => ca. 43200 Minuten)
-$fw_update_interval = 43200;
+$fw_update_interval = 43200; //in Minuten
+
+//status update interval: für das Aktualisieren der Routervariablen (empfohlen 10 Minuten)
+$status_update_interval = 10; //in Minuten
 ?>
