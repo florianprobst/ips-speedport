@@ -8,7 +8,7 @@ Telekom Speedport Hybrid Anbindung für IP-Symcon
 Dieses Skript greift auf die Weboberfläche des Telekom Speedport Hybrid Routers zu und liest dabei alle möglichen Informationen aus. Dazu gehören u.a. DSL-Status, IP-Adresse, Anruflisten, DSL-Informationen, Leitungsqualität, LTE-Verbindungsqualität, WLAN-Informationen, etc. 
 
 ## Unterstützte Firmware
-Getestet wurde das Skript mit dem jeweils zum Testdatum aktuellen Entwicklungsstand. Spätere Weiterentwicklungen sind nicht mit den älteren Firmware-Versionen getestet.
+Getestet wurde das Skript mit dem jeweils zum Testdatum aktuellen Entwicklungsstand. Spätere Weiterentwicklungen sind nicht mit den älteren Firmware-Versionen getestet. Es werden ausschliesslich Speedport Hybrid Router der Telekom unterstützt.
 
 * 29.07.2015 => Firmware 050124.02.00.009
 
@@ -24,8 +24,6 @@ Die in den Variablenprofilen festgelegten Wertungen (was ist gut und was schlech
 Es ist zu berücksichtigen, dass jeder Aufruf dieses Skripts andere Benutzer aus der Weboberfläche des Routers herauswirft.
 Desweiteren benötigt das Skript je nach Rechenkapazität und Verbindung des IPS-Hosts zum Router einen Moment zur Ausführung.
 Bei mir sind es bis zu 10 Sekunden. 
-
-Ältere Speedportmodelle verfügen über ein anderes Webinterface / Anmeldeverfahren und funktionieren voraussichtlich nicht. Eventuell funktioniert es mit aktuellen Non-Hybrid-Speedports. 
 
 ## Installation
 
