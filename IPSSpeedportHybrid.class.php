@@ -3,13 +3,15 @@ require_once('speedport-hybrid-php-api/SpeedportHybrid.class.php');
 require_once('lib/SpeedportVariableProfile.class.php');
 require_once('lib/SpeedportVariable.class.php');
 require_once('lib/SpeedportCall.class.php');
+require_once('lib/SpeedportTimerEvent.class.php');
+require_once('lib/SpeedportScript.class.php');
 
 class IPSSpeedportHybrid extends SpeedportHybrid{
 
 	protected $password;										//speedport router admin passwort
 	protected $url;													//speedport router ip-adresse
 	protected $debug;												//bei true werden per echo debuginformationen ausgegeben
-	protected $variable_profile_prefix;			//Präfix für neu anzulegende Variablenprofile
+	protected $prefix;			//Präfix für neu anzulegende Variablenprofile
 	protected $parentId;										//ID des Parents in welchem die Variablen erstellt werden sollen
 
 	protected $dsl_status;									//dsl status: online-offline
@@ -22,7 +24,8 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 	protected $wlan_enabled;								//wlan aktiviert / deaktiviert
 	protected $wlan_5ghz_enabled;						//wlan 5ghz aktiviert / deaktiviert
 	protected $firmware_version;						//firmware version
-	protected $fw_update_interval;					//Intervall in Minutem in welchem Updateprüfungen durchgeführt werden sollen
+	protected $fw_update_interval;					//Intervall in Minuten in welchem Updateprüfungen durchgeführt werden sollen
+	protected $update_interval;							//Intervall in Minuten in welchem die Routerinformationen neu ausgelesen werden
 
 	//die Werte des Routers zur Leitungsqualität sind durch 10 zu teilen, sonst ergeben Sie keinen Sinn :-)
 	//also der Wert 54 entspricht 5.4 dB - das passt, ich habe nur ein 2000er DSL RAM :-(
@@ -62,7 +65,23 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 
 	protected $variable_profiles = array();	//speichert alle IPS Variablenprofile
 	protected $variables = array();					//speichert alle IPS Variablen
-
+	
+		/**
+	* array aller automatisch erstellen scripte von ips-speedport
+	*
+	* @var scripts
+	* @access private
+	*/
+	private $scripts = array();
+	
+	/**
+	* array aller events von ips-speedport
+	*
+	* @var events
+	* @access private
+	*/
+	private $events = array();
+	
 	//IPS Datentypen
 	const tBOOL				= 0;
 	const tINT				= 1;
@@ -77,14 +96,16 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 	const hColor5			= 0x46F700;						//grün
 	const hColor6			= 0x46F700;						//grün
 
-	public function __construct($password, $url = "http://speedport.ip", $debug = true, $variable_profile_prefix = "Speedport_", $call_sort = SORT_DESC, $parentId = "", $fw_update_interval = 43200 /*[Objekt #43200 existiert nicht]*/){
+	public function __construct($password, $configId, $url = "http://speedport.ip", $debug = true, $prefix = "Speedport_", $call_sort = SORT_DESC, $parentId = "", $fw_update_interval = 43200, $update_interval = 10){
 		parent::__construct($url);
 		if($parentId == "") $parentId = $_IPS['SELF'];
+		$this->configId = $configId;
 		$this->debug = $debug;
-		$this->variable_profile_prefix = $variable_profile_prefix;
+		$this->prefix = $prefix;
 		$this->call_sort = $call_sort;
 		$this->parentId = $parentId;
 		$this->fw_update_interval = $fw_update_interval;
+		$this->update_interval = $update_interval;
 		$this->setup();
 		$this->login($password);
 	}
@@ -103,6 +124,16 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 			if($this->debug) "INFO - deleting variable: ". $variable->getName() ."\n";
 			$variable->delete();
 		}
+		
+		foreach($this->events as $event){
+			if($this->debug) "INFO - deleting event: ". $event->getName() ."\n";
+			$event->delete();
+		}
+		
+		foreach($this->scripts as $script){
+			if($this->debug) "INFO - deleting event: ". $script->getName() ."\n";
+			$script->delete();
+		}
 	}
 
 	private function setup(){
@@ -110,19 +141,19 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 
 		$assoc[0] = ["val"=>0,	"name"=>"Offline",	"icon" => "", "color" => self::hColor1];
 		$assoc[1] = ["val"=>1,	"name"=>"Online",	"icon" => "", "color" => self::hColor6];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "DSL_Status", self::tBOOL, "", "", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "DSL_Status", self::tBOOL, "", "", $assoc));
 		unset($assoc);
 
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "UpTime", self::tINT, "", " Tage", NULL));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "UpTime", self::tINT, "", " Tage", NULL));
 
 		$assoc[0] = ["val"=>0,	"name"=>"Disabled",	"icon" => "", "color" => self::hColor1];
 		$assoc[1] = ["val"=>1,	"name"=>"Enabled",	"icon" => "", "color" => self::hColor6];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "LTE_Enabled", self::tBOOL, "", "", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "LTE_Enabled", self::tBOOL, "", "", $assoc));
 		unset($assoc);
 
 		$assoc[0] = ["val"=>0,	"name"=>"Veraltet",	"icon" => "", "color" => self::hColor1];
 		$assoc[1] = ["val"=>1,	"name"=>"Aktuell",	"icon" => "", "color" => self::hColor6];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "Firmware_UpToDate", self::tBOOL, "", "", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "Firmware_UpToDate", self::tBOOL, "", "", $assoc));
 		unset($assoc);
 
 		$assoc[0] = ["val"=>0,	"name"=>0,	"icon" => "", "color" => self::hColor1];
@@ -131,16 +162,16 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$assoc[3] = ["val"=>3,	"name"=>60,	"icon" => "", "color" => self::hColor4];
 		$assoc[4] = ["val"=>4,	"name"=>80,	"icon" => "", "color" => self::hColor5];
 		$assoc[5] = ["val"=>5,	"name"=>100,	"icon" => "", "color" => self::hColor6];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "LTE_Signal", self::tINT, "", " %", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "LTE_Signal", self::tINT, "", " %", $assoc));
 		unset($assoc);
 
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "Bandwidth", self::tFLOAT, "", " kbit/s"));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "Bandwidth", self::tFLOAT, "", " kbit/s"));
 
 		$assoc[0] = ["val"=>0,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor1];
 		$assoc[1] = ["val"=>11,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor3];
 		$assoc[2] = ["val"=>20,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor4];
 		$assoc[3] = ["val"=>28,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor5];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "SNR_Margin", self::tFLOAT, "", " dB", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "SNR_Margin", self::tFLOAT, "", " dB", $assoc));
 		unset($assoc);
 
 		$assoc[0] = ["val"=>0,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor5];
@@ -148,7 +179,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$assoc[2] = ["val"=>31,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor3];
 		$assoc[3] = ["val"=>41,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor2];
 		$assoc[4] = ["val"=>51,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor1];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "Line_Attenuation", self::tFLOAT, "", " dB", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "Line_Attenuation", self::tFLOAT, "", " dB", $assoc));
 		unset($assoc);
 
 		$assoc[0] = ["val"=>-140,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor1];
@@ -157,7 +188,7 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$assoc[3] = ["val"=>-95,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor4];
 		$assoc[4] = ["val"=>-80,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor5];
 		$assoc[5] = ["val"=>-65,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor6];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "RSRP", self::tINT, "", " dBm", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "RSRP", self::tINT, "", " dBm", $assoc));
 		unset($assoc);
 
 		$assoc[0] = ["val"=>-20,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor1];
@@ -166,23 +197,23 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		$assoc[3] = ["val"=>-8,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor4];
 		$assoc[4] = ["val"=>-5,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor5];
 		$assoc[5] = ["val"=>-3,	"name"=>"%.1f",	"icon" => "", "color" => self::hColor6];
-		array_push($this->variable_profiles, new SpeedportVariableProfile($this->variable_profile_prefix . "RSRQ", self::tINT, "", " dBm", $assoc));
+		array_push($this->variable_profiles, new SpeedportVariableProfile($this->prefix . "RSRQ", self::tINT, "", " dBm", $assoc));
 		unset($assoc);
 		//Erstelle IPS-Variablen wenn nötig
-		array_push($this->variables, new SpeedportVariable("DSL_Status", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "DSL_Status")));
-		array_push($this->variables, new SpeedportVariable("LTE_Enabled", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "LTE_Enabled")));
-		array_push($this->variables, new SpeedportVariable("LTE_Signal", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "LTE_Signal")));
-		array_push($this->variables, new SpeedportVariable("DSL_Downstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "Bandwidth")));
-		array_push($this->variables, new SpeedportVariable("DSL_Upstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "Bandwidth")));
+		array_push($this->variables, new SpeedportVariable("DSL_Status", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->prefix . "DSL_Status")));
+		array_push($this->variables, new SpeedportVariable("LTE_Enabled", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->prefix . "LTE_Enabled")));
+		array_push($this->variables, new SpeedportVariable("LTE_Signal", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "LTE_Signal")));
+		array_push($this->variables, new SpeedportVariable("DSL_Downstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "Bandwidth")));
+		array_push($this->variables, new SpeedportVariable("DSL_Upstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "Bandwidth")));
 		array_push($this->variables, new SpeedportVariable("WLAN_ssid", self::tSTRING, $this->parentId, NULL, NULL));
 		array_push($this->variables, new SpeedportVariable("WLAN_5Ghz_ssid", self::tSTRING, $this->parentId, NULL, NULL));
 		array_push($this->variables, new SpeedportVariable("WLAN_enabled", self::tBOOL, $this->parentId, NULL, "~Switch"));
 		array_push($this->variables, new SpeedportVariable("WLAN_5Ghz_enabled", self::tBOOL, $this->parentId, NULL,  "~Switch"));
 		array_push($this->variables, new SpeedportVariable("Firmware_Version", self::tSTRING, $this->parentId, NULL,  NULL));
-		array_push($this->variables, new SpeedportVariable("SNR_Margin_Downstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "SNR_Margin")));
-		array_push($this->variables, new SpeedportVariable("SNR_Margin_Upstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "SNR_Margin")));
-		array_push($this->variables, new SpeedportVariable("Line_Attenuation_Upstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "Line_Attenuation")));
-		array_push($this->variables, new SpeedportVariable("Line_Attenuation_Downstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "Line_Attenuation")));
+		array_push($this->variables, new SpeedportVariable("SNR_Margin_Downstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "SNR_Margin")));
+		array_push($this->variables, new SpeedportVariable("SNR_Margin_Upstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "SNR_Margin")));
+		array_push($this->variables, new SpeedportVariable("Line_Attenuation_Upstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "Line_Attenuation")));
+		array_push($this->variables, new SpeedportVariable("Line_Attenuation_Downstream", self::tFLOAT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "Line_Attenuation")));
 		array_push($this->variables, new SpeedportVariable("CRC_errors_upload", self::tFLOAT, $this->parentId, NULL,  NULL));
 		array_push($this->variables, new SpeedportVariable("HEC_errors_upload", self::tFLOAT, $this->parentId, NULL,  NULL));
 		array_push($this->variables, new SpeedportVariable("FEC_errors_upload", self::tFLOAT, $this->parentId, NULL,  NULL));
@@ -191,21 +222,35 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 		array_push($this->variables, new SpeedportVariable("FEC_errors_download", self::tFLOAT, $this->parentId, NULL,  NULL));
 		array_push($this->variables, new SpeedportVariable("DSL_Synchronization", self::tBOOL, $this->parentId, NULL, "~Alert.Reversed"));
 		array_push($this->variables, new SpeedportVariable("LTE_SIM_Card", self::tBOOL, $this->parentId, NULL, "~Alert.Reversed"));
-		array_push($this->variables, new SpeedportVariable("RSRP", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "RSRP")));
-		array_push($this->variables, new SpeedportVariable("RSRQ", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "RSRQ")));
+		array_push($this->variables, new SpeedportVariable("RSRP", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "RSRP")));
+		array_push($this->variables, new SpeedportVariable("RSRQ", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "RSRQ")));
 		array_push($this->variables, new SpeedportVariable("Tunnel_Bonding", self::tBOOL, $this->parentId, NULL, "~Alert.Reversed"));
 		array_push($this->variables, new SpeedportVariable("IP_Address", self::tSTRING, $this->parentId, NULL, NULL));
 		array_push($this->variables, new SpeedportVariable("Dialed_Calls", self::tSTRING, $this->parentId, NULL, "~HTMLBox"));
 		array_push($this->variables, new SpeedportVariable("Missed_Calls", self::tSTRING, $this->parentId, NULL, "~HTMLBox"));
 		array_push($this->variables, new SpeedportVariable("Taken_Calls", self::tSTRING, $this->parentId, NULL, "~HTMLBox"));
-		array_push($this->variables, new SpeedportVariable("Firmware_UpToDate", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "Firmware_UpToDate")));
-		array_push($this->variables, new SpeedportVariable("UpTime", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->variable_profile_prefix . "UpTime")));
+		array_push($this->variables, new SpeedportVariable("Firmware_UpToDate", self::tBOOL, $this->parentId, NULL, $this->getProfileByName($this->prefix . "Firmware_UpToDate")));
+		array_push($this->variables, new SpeedportVariable("UpTime", self::tINT, $this->parentId, NULL, $this->getProfileByName($this->prefix . "UpTime")));
 
 		//Sortiere Variablen
 		$i=0;
 		foreach($this->variables as $variable){
 			IPS_SetPosition($variable->getId(), ++$i);
 		}
+		
+		//erstelle notwendige Skripte
+		//script contents
+		$script_includes = '<?require_once(IPS_GetScript('. $this->configId . ')["ScriptFile"]);';
+		$script_update_status = $script_includes . '$speedport->update();?>';
+		$script_restart_router = $script_includes . '$speedport->reboot()?>';
+		$script_uninstall = $script_includes . '$speedport->cleanup();?>';
+		
+		array_push($this->scripts, new SpeedportScript($this->parentId, $this->prefix . "update_status", $script_update_status, $this->debug));
+		array_push($this->scripts, new SpeedportScript($this->parentId, $this->prefix . "restart_router", $script_restart_router, $this->debug));
+		array_push($this->scripts, new SpeedportScript($this->parentId, $this->prefix . "uninstall", $script_uninstall, $this->debug));
+		
+		array_push($this->events, new SpeedportTimerEvent($this->getScriptByName("update_status")->getInstanceId(), $this->prefix ."update_status_event", $this->update_interval, $this->debug));
+
 	}
 
 	private function getProfileByName($name){
@@ -222,6 +267,21 @@ class IPSSpeedportHybrid extends SpeedportHybrid{
 				return $variable;
 		}
 		return NULL;
+	}
+	
+	/**
+	* getScriptByName
+	*
+	* @return SpeedportScript if found else false
+	* @access private
+	*/
+	private function getScriptByName($name){
+		foreach($this->scripts as &$s){
+			if($s->getName() == $this->prefix . $name){
+				return $s;
+			}
+		}
+		return false;
 	}
 
 	public function update(){
