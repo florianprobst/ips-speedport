@@ -10,7 +10,8 @@ Dieses Skript greift auf die Weboberfläche des Telekom Speedport Hybrid Routers
 ## Unterstützte Firmware
 Getestet wurde das Skript mit dem jeweils zum Testdatum aktuellen Entwicklungsstand. Spätere Weiterentwicklungen sind nicht mit den älteren Firmware-Versionen getestet. Es werden ausschliesslich Speedport Hybrid Router der Telekom unterstützt.
 
-* 29.07.2015 => Firmware 050124.02.00.009
+* 29.07.2015 => Firmware 050124.02.00.009 ([![Release](https://img.shields.io/github/release/florianprobst/ips-speedport.svg?style=flat-square)](https://github.com/florianprobst/ips-speedport/releases/tag/v1.0.0)
+* 12.01.2016 => Firmware 050124.02.00.010 ([![Release](https://img.shields.io/github/release/florianprobst/ips-speedport.svg?style=flat-square)](https://github.com/florianprobst/ips-speedport/releases/tag/v1.0.1)
 
 ## Weiterführende Informationen
 Das Skript legt selbstständig benötigte IPS-Variablen und Variablenprofile unterhalb des Skriptes an.
