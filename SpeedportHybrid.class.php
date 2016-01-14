@@ -1,6 +1,7 @@
 <?php
 require_once('lib/exception/RebootException.class.php');
 require_once('lib/exception/RouterException.class.php');
+require_once('lib/exception/NotImplementedException.class.php');
 require_once('CryptLib/CryptLib.php');
 require_once('lib/trait/Connection.class.php');
 require_once('lib/trait/CryptLib.class.php');
@@ -13,7 +14,7 @@ require_once('lib/trait/System.class.php');
 /**
  * @author      Jan Altensen (Stricted)
  * @license     GNU Lesser General Public License <http://opensource.org/licenses/lgpl-license.php>
- * @copyright   2015 Jan Altensen (Stricted)
+ * @copyright   2015-2016 Jan Altensen (Stricted)
  */
 class SpeedportHybrid {
 	use Connection;
@@ -28,7 +29,7 @@ class SpeedportHybrid {
 	 * class version
 	 * @const	string
 	 */
-	const VERSION = '1.0.4';
+	const VERSION = '1.0.5';
 	
 	/**
 	 * router url
@@ -113,7 +114,7 @@ class SpeedportHybrid {
 	 * @param	integer	$count
 	 * @return	array
 	 */
-	private function sentRequest ($path, $fields, $cookie = false, $count = 0) {
+	private function sendRequest ($path, $fields, $cookie = false, $count = 0) {
 		$url = $this->url.$path.'?lang=en';
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, $url);
